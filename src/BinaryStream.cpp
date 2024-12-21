@@ -8,7 +8,7 @@ void BinaryStream::Clear()
 bool BinaryStream::OpenFile(std::string filename)
 {
 	HANDLE hFile = CreateFile(
-		filename.c_str(),		// file to open
+		(LPCWSTR)filename.c_str(),		// file to open
 		GENERIC_READ,			// open for reading
 		FILE_SHARE_READ,		// share for reading
 		NULL,					// default security
