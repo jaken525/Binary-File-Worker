@@ -1,3 +1,6 @@
+#ifndef BINERYSTREAM_H
+#define BINERYSTREAM_H
+
 #include <stdio.h>
 #include <iostream>
 #include <fstream>
@@ -11,13 +14,13 @@
 class BinaryStream
 {
 private:
-	size_t fileSize;
-	size_t pos;
+	size_t fileSize = 0;
+	size_t pos = 0;
 
 	bool isFileOpen;
 
 public:
-	char* buffer;
+	char* buffer = NULL;
 
 	BinaryStream()
 	{
@@ -42,6 +45,7 @@ public:
 		Clear();
 	}
 
+	unsigned int ReadShortShort();
 	unsigned short ReadShort();
 	unsigned long ReadLong();
 	float ReadFloat();
@@ -72,3 +76,5 @@ public:
 
 	void PrintFile();
 };
+
+#endif
