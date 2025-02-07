@@ -2,13 +2,15 @@
 
 void BinaryStream::Clear()
 {
+	this->pos = 0;
+	this->fileSize = 0;
 	if (buffer = NULL) delete[] this->buffer;
 }
 
 bool BinaryStream::OpenFile(std::string filename)
 {
 	HANDLE hFile = CreateFile(
-		(LPCWSTR)filename.c_str(),		// file to open
+		filename.c_str(),		// file to open
 		GENERIC_READ,			// open for reading
 		FILE_SHARE_READ,		// share for reading
 		NULL,					// default security
@@ -17,6 +19,7 @@ bool BinaryStream::OpenFile(std::string filename)
 		NULL					// no attr. template
 	);
 
+	Clear();
 	if (hFile == INVALID_HANDLE_VALUE)
 	{
 		std::cout << "Failed to Open File\n";
@@ -127,7 +130,6 @@ std::string BinaryStream::WriteString(int size, std::string str)
 bool BinaryStream::Jump(int jump)
 {
 	pos += jump;
-
 	return true;
 }
 
@@ -186,7 +188,7 @@ unsigned long BinaryStream::ReadLong()
 unsigned int BinaryStream::ReadShortShort()
 {
 	unsigned short result = {
-		(unsigned int)((uint8_t)buffer[pos] * 0x00000001)
+		(unsigned int)((uint8_t)this->buffer[this->pos] * 0x00000001)
 	};
 	pos += 1;
 	return result;
