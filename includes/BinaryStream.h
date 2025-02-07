@@ -1,5 +1,5 @@
-#ifndef BINARYSTREAM_H
-#define BINARYSTREAM_H
+#ifndef BINERYSTREAM_H
+#define BINERYSTREAM_H
 
 #include <stdio.h>
 #include <iostream>
@@ -75,6 +75,10 @@ public:
 	}
 
 	void PrintFile();
+	size_t GetPosition()
+	{
+		return pos;
+	}
 };
 
 #endif
