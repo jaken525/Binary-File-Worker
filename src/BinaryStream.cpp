@@ -152,7 +152,7 @@ unsigned long BinaryStream::ReadLong()
 unsigned int BinaryStream::ReadShortShort()
 {
 	unsigned short result = {
-		(unsigned int)((uint8_t)buffer[pos] * 0x00000001)
+		(unsigned int)((uint8_t)this->buffer[this->pos] * 0x00000001)
 	};
 	pos += 1;
 	return result;
