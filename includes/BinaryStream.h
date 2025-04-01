@@ -10,6 +10,7 @@
 #include <iomanip>
 #include <windows.h>
 #include <shlwapi.h>
+#include <bitset>
 
 class BinaryStream
 {

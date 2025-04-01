@@ -2,13 +2,15 @@
 
 void BinaryStream::Clear()
 {
+	this->pos = 0;
+	this->fileSize = 0;
 	if (buffer = NULL) delete[] this->buffer;
 }
 
 bool BinaryStream::OpenFile(std::string filename)
 {
 	HANDLE hFile = CreateFile(
-		(LPCWSTR)filename.c_str(),		// file to open
+		filename.c_str(),		// file to open
 		GENERIC_READ,			// open for reading
 		FILE_SHARE_READ,		// share for reading
 		NULL,					// default security
@@ -17,6 +19,7 @@ bool BinaryStream::OpenFile(std::string filename)
 		NULL					// no attr. template
 	);
 
+	Clear();
 	if (hFile == INVALID_HANDLE_VALUE)
 	{
 		std::cout << "Failed to Open File\n";
@@ -50,84 +53,49 @@ bool BinaryStream::OpenFile(std::string filename)
 
 std::string BinaryStream::WriteLong(int num)
 {
-	std::string Hex = "";
-	std::stringstream s;
-	s << std::hex << num;
+	std::string result(4, 0);
 
-	int zeroes = 8 - size(s.str());
-	for (int i = 0; i < zeroes; i++)
-		Hex += "0";
-	Hex += s.str();
+	for (int i = 0; i < 4; ++i)
+		result[i] = static_cast<char>((num >> (i * 8)) & 0xFF);
 
-	int arr[] = { 0, 0, 0, 0 };
-	int c = 3;
-	for (int i = 0; i < Hex.length() - 1; i += 2)
-	{
-		std::stringstream h;
-		h << Hex[i] << Hex[i + 1];
-		h >> std::hex >> arr[c];
-		c--;
-	}
-
-	Hex = "";
-	for (int i = 0; i < 4; i++)
-		Hex += char(uint8_t(arr[i]));
-
-	return Hex;
+	return result;
 }
 
 std::string BinaryStream::WriteFloat(float num)
 {
-	std::string strHEX = "";
-	unsigned long a = 0;
-	unsigned long a24 = 0;
-	float n = num;
+	std::string result(4, 0);
 
-	memcpy(&a, &n, 4);
-	strHEX += char(uint8_t(a));
-	strHEX += char((uint16_t(a) - uint8_t(a)) / 0x00000100);
+	union
+	{
+		float f;
+		uint32_t u;
+	} converter;
+	converter.f = num;
 
-	memcpy(&a24, &n, 3);
-	strHEX += char((a24 - int(uint16_t(a))) / 0x00010000);
-	strHEX += char((a - a24) / 0x01000000);
+	for (int i = 0; i < 4; ++i)
+		result[i] = static_cast<char>((converter.u >> (i * 8)) & 0xFF);
 
-	return strHEX;
+	return result;
 }
 
-std::string BinaryStream::WriteShort(int num)
+char BinaryStream::WriteShort(int num)
 {
-	int arr[] = { 0, 0 };
-	while (num >= 256)
-	{
-		arr[1] += 1;
-		num -= 256;
-	}
-	arr[0] = num;
-
-	std::string hex;
-	for (int i = 0; i < 2; i++)
-		hex += char(arr[i]);
-
-	return hex;
+	return static_cast<char>(num & 0xFF);
 }
 
 std::string BinaryStream::WriteString(int size, std::string str)
 {
-	size -= str.length();
-
-	std::string endLine = "";
-	endLine += str;
-
-	for (int i = 0; i < size; i++)
-		endLine += char(uint8_t(0));
-
-	return endLine;
+	std::string result(str);
+	result.resize(size, '\0');
+	return result;
 }
 
 bool BinaryStream::Jump(int jump)
 {
-	pos += jump;
+	if (pos + jump > fileSize)
+		return false;
 
+	pos += jump;
 	return true;
 }
 
@@ -136,11 +104,9 @@ std::string BinaryStream::ReadString(int size)
 	std::string result = "";
 
 	for (int i = 0; i < size; i++)
-	{
 		result += this->buffer[pos];
-		pos += 1;
-	}
 
+	pos += size;
 	return result;
 }
 
@@ -243,6 +209,10 @@ std::string BinaryStream::GetFileNamePath(const std::string str)
 		return "";
 }
 
+/// <summary>
+/// Только для консоли.
+/// Выводит hex таблицу
+/// </summary>
 void BinaryStream::PrintFile()
 {
 	for (int i = 0; i < fileSize; i++)
