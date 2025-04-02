@@ -74,7 +74,7 @@ public:
 		return intBuffer;
 	}
 
-	void PrintFile();
+	void PrintFile(uint8_t size = 16);
 	size_t GetPosition()
 	{
 		return pos;
