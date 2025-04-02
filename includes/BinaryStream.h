@@ -10,7 +10,6 @@
 #include <iomanip>
 #include <windows.h>
 #include <shlwapi.h>
-#include <bitset>
 
 class BinaryStream
 {
@@ -55,7 +54,7 @@ public:
 	bool Jump(int jump);
 
 	std::string WriteString(int size, std::string str);
-	std::string WriteShort(int num);
+	char WriteShort(int num);
 	std::string WriteFloat(float num);
 	std::string WriteLong(int num);
 

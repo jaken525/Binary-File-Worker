@@ -93,7 +93,7 @@ std::string BinaryStream::WriteString(int size, std::string str)
 bool BinaryStream::Jump(int jump)
 {
 	if (pos + jump > fileSize)
-		return false;
+		throw "Position out of file buffer.\n";
 
 	pos += jump;
 	return true;
@@ -113,16 +113,15 @@ std::string BinaryStream::ReadString(int size)
 std::string BinaryStream::ReadStringWithoutZeroes(int size)
 {
 	std::string result = "";
-	bool isWriting = true;
 
 	for (int i = 0; i < size; i++)
-	{
-		if (this->buffer[pos] != 0 && isWriting)
+		if (this->buffer[pos] != 0)
+		{
 			result += this->buffer[pos];
+			pos += 1;
+		}
 		else
-			isWriting = false;
-		pos += 1;
-	}
+			break;
 
 	return result;
 }
@@ -196,15 +195,10 @@ std::string BinaryStream::GetFilenameFile(const std::string str)
 std::string BinaryStream::GetFileNamePath(const std::string str)
 {
 	size_t found;
-	std::string strt;
 	found = str.find_last_of("/\\");
 
 	if (found != std::string::npos)
-	{
-		strt = str.substr(0, found);
-
-		return (strt + "\\");
-	}
+		return (str.substr(0, found) + "\\");
 	else
 		return "";
 }
