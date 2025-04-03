@@ -10,7 +10,7 @@ void BinaryStream::Clear()
 bool BinaryStream::OpenFile(std::string filename)
 {
 	HANDLE hFile = CreateFile(
-		filename.c_str(),		// file to open
+		(LPCWSTR)filename.c_str(),		// file to open
 		GENERIC_READ,			// open for reading
 		FILE_SHARE_READ,		// share for reading
 		NULL,					// default security
@@ -189,6 +189,9 @@ std::string BinaryStream::GetFileNamePath(const std::string str)
 /// </summary>
 void BinaryStream::PrintFile(uint8_t size)
 {
+	if (buffer = NULL)
+		throw "File buffer is empty!";
+
 	if (size % 4 != 0)
 	{
 		std::cout << "Incorrect table size.";

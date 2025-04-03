@@ -14,14 +14,13 @@
 class BinaryStream
 {
 private:
+	char* buffer = NULL;
 	size_t fileSize = 0;
 	size_t pos = 0;
 
 	bool isFileOpen;
 
 public:
-	char* buffer = NULL;
-
 	BinaryStream()
 	{
 		buffer = NULL;
@@ -75,10 +74,7 @@ public:
 	}
 
 	void PrintFile(uint8_t size = 16);
-	size_t GetPosition()
-	{
-		return pos;
-	}
+	size_t GetPosition() { return pos; }
 };
 
 #endif
