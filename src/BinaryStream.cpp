@@ -1,13 +1,49 @@
 #include "../includes/BinaryStream.h"
 
-void BinaryStream::Clear()
-{
-	this->pos = 0;
-	this->fileSize = 0;
-	if (buffer = NULL) delete[] this->buffer;
+#pragma region Constructors
+
+BinaryStream* BinaryStream::init() {
+	BinaryStream bstream;
+	bstream.buffer = NULL;
+	bstream.fileSize = 0;
+	bstream.pos = 0;
+	bstream.isFileOpen = false;
+	return &bstream;
 }
 
-bool BinaryStream::OpenFile(std::string filename)
+BinaryStream* BinaryStream::init(const std::string fileName) {
+	BinaryStream bstream;
+	bstream.isFileOpen = bstream.open_file(fileName);
+	if (!bstream.isFileOpen) {
+		throw "Failed to Open File\n";
+	}
+	return &bstream;
+}
+
+BinaryStream::BinaryStream() {
+	buffer = NULL;
+	fileSize = 0;
+	pos = 0;
+	isFileOpen = false;
+}
+
+BinaryStream::BinaryStream(const std::string fileName) {
+	isFileOpen = open_file(fileName);
+	if (!isFileOpen) {
+		throw "Failed to Open File\n";
+	}
+}
+
+#pragma endregion
+
+void BinaryStream::clear()
+{
+	pos = 0;
+	fileSize = 0;
+	if (buffer = NULL) delete[] buffer;
+}
+
+bool BinaryStream::open_file(const std::string filename)
 {
 	HANDLE hFile = CreateFile(
 		(LPCWSTR)filename.c_str(),		// file to open
@@ -18,7 +54,7 @@ bool BinaryStream::OpenFile(std::string filename)
 		FILE_ATTRIBUTE_NORMAL,	// normal file
 		NULL					// no attr. template
 	);
-	Clear();
+	clear();
 	if (hFile == INVALID_HANDLE_VALUE)
 	{
 		std::cout << "Failed to Open File\n";
@@ -45,139 +81,148 @@ bool BinaryStream::OpenFile(std::string filename)
 	return true;
 }
 
-std::string BinaryStream::WriteLong(int num)
-{
+#pragma region DataGet
+
+std::string BinaryStream::convert_long(int num) {
 	std::string result(4, 0);
-	for (int i = 0; i < 4; ++i)
+	for (int i = 0; i < 4; ++i) {
 		result[i] = static_cast<char>((num >> (i * 8)) & 0xFF);
+	}
 	return result;
 }
 
-std::string BinaryStream::WriteFloat(float num)
-{
+std::string BinaryStream::convert_long_long(int num) {
+	std::string result(8, 0);
+	for (int i = 0; i < 8; ++i) {
+		result[i] = static_cast<char>((num >> (i * 8)) & 0xFF);
+	}
+	return result;
+}
+
+std::string BinaryStream::convert_float(float num) {
 	std::string result(4, 0);
-	union
-	{
+	union {
 		float f;
 		uint32_t u;
 	} converter;
 	converter.f = num;
-	for (int i = 0; i < 4; ++i)
+	for (int i = 0; i < 4; ++i) {
 		result[i] = static_cast<char>((converter.u >> (i * 8)) & 0xFF);
+	}
 	return result;
 }
 
-char BinaryStream::WriteShort(int num)
-{
+std::string BinaryStream::convert_double(double num) {
+	std::string result(8, 0);
+	union {
+		double f;
+		uint64_t u;
+	} converter;
+	converter.f = num;
+	for (int i = 0; i < 8; ++i) {
+		result[i] = static_cast<char>((converter.u >> (i * 8)) & 0xFF);
+	}
+	return result;
+}
+
+char BinaryStream::convert_symbol(int num) {
 	return static_cast<char>(num & 0xFF);
 }
 
-std::string BinaryStream::WriteString(int size, std::string str)
-{
+std::string BinaryStream::convert_string(int size, const std::string str) {
 	std::string result(str);
 	result.resize(size, '\0');
 	return result;
 }
 
-bool BinaryStream::Jump(int jump)
-{
-	if (pos + jump > fileSize)
+#pragma endregion
+
+bool BinaryStream::check_jump(int jump) const {
+	if (&pos + jump > &fileSize) {
 		throw "Position out of file buffer.\n";
+	}
+	return true;
+}
+
+bool BinaryStream::jump(int jump) {
+	check_jump(jump);
 	pos += jump;
 	return true;
 }
 
-std::string BinaryStream::ReadString(int size)
-{
-	if (pos + size > fileSize)
-		throw "Position out of file buffer.\n";
+#pragma region FileRead
+std::string BinaryStream::read_str(int size) {
+	check_jump(size);
 	std::string result = "";
-	for (int i = 0; i < size; i++)
+	for (int i = 0; i < size; i++) {
 		result += this->buffer[pos];
-	pos += size;
+	}
+	jump(size);
 	return result;
 }
 
-std::string BinaryStream::ReadStringWithoutZeroes(int size)
-{
-	if (pos + size > fileSize)
-		throw "Position out of file buffer.\n";
+std::string BinaryStream::read_str_wz(int size) {
+	check_jump(size);
 	std::string result = "";
-	for (int i = 0; i < size; i++)
-		if (this->buffer[pos] != 0)
-			result += this->buffer[pos];
-		else
+	for (int i = 0; i < size; i++) {
+		if (this->buffer[pos] == 0)
 			break;
-	pos += size;
+		result += this->buffer[pos];
+	}
+	jump(size);
 	return result;
 }
 
-float BinaryStream::ReadFloat()
-{
-	if (pos + 4 > fileSize)
-		throw "Position out of file buffer.\n";
+float BinaryStream::read_float() {
 	float result = 0.0;
-	unsigned long b = ReadLong();
+	unsigned long b = read_long();
 	memcpy(&result, &b, 4);
 	return result;
 }
 
-unsigned long BinaryStream::ReadLong()
-{
-	if (pos + 4 > fileSize)
-		throw "Position out of file buffer.\n";
-	unsigned long result = {
-		(unsigned int)((uint8_t)this->buffer[pos] * 0x00000001) + \
-		(unsigned int)((uint8_t)this->buffer[pos + 1] * 0x00000100) + \
-		(unsigned int)((uint8_t)this->buffer[pos + 2] * 0x00010000) + \
-		(unsigned int)((uint8_t)this->buffer[pos + 3] * 0x01000000)
-	};
-	pos += 4;
-	return result;
+unsigned long long BinaryStream::read_long_long() {
+	jump(8);
+	return *(unsigned long long*)&this->buffer[pos];
 }
 
-unsigned int BinaryStream::ReadShortShort()
-{
-	if (pos + 1 > fileSize)
-		throw "Position out of file buffer.\n";
-	pos += 1;
-	return (unsigned int)((uint8_t)this->buffer[this->pos] * 0x00000001);
+unsigned long BinaryStream::read_long() {
+	jump(4);
+	return *(unsigned long*)&this->buffer[pos];
 }
 
-unsigned short BinaryStream::ReadShort()
-{
-	if (pos + 2 > fileSize)
-		throw "Position out of file buffer.\n";
-	unsigned short result = {
-		(unsigned int)((uint8_t)this->buffer[this->pos] * 0x00000001) + \
-		(unsigned int)((uint8_t)this->buffer[this->pos + 1] * 0x00000100)
-	};
-	pos += 2;
-	return result;
+unsigned int BinaryStream::read_short_short() {
+	jump(1);
+	return *(unsigned int*)&this->buffer[pos];
 }
 
-std::string BinaryStream::GetFilenameFile(const std::string str)
-{
+unsigned short BinaryStream::read_short() {
+	jump(2);
+	return *(unsigned short*)&this->buffer[pos];
+}
+#pragma endregion
+
+std::string BinaryStream::get_filename(const std::string str) const {
 	size_t found;
 	std::string strt;
 	found = str.find_last_of("/\\");
-	if (found < str.size())
-	{
+	if (found < str.size()) {
 		strt = str.substr(found + 1, -1);
 		found = strt.find(".");
-		if (found < strt.size())
+		if (found < strt.size()) {
 			strt = strt.substr(0, found);
+		}
 	}
-	else
+	else {
 		strt = str;
+	}
 	size_t lastdot = strt.find_last_of(".");
-	if (lastdot == std::string::npos)
+	if (lastdot == std::string::npos) {
 		return strt;
+	}
 	return strt.substr(0, lastdot);
 }
 
-std::string BinaryStream::GetFileNamePath(const std::string str)
-{
+std::string BinaryStream::get_filename_path(const std::string str) const {
 	size_t found;
 	found = str.find_last_of("/\\");
 	return found != std::string::npos ? (str.substr(0, found) + "\\") : "";
@@ -187,40 +232,37 @@ std::string BinaryStream::GetFileNamePath(const std::string str)
 /// Only for console.
 /// Print HEX table
 /// </summary>
-void BinaryStream::PrintFile(uint8_t size)
-{
-	if (buffer = NULL)
+void BinaryStream::print_file(uint8_t size) const {
+	if (buffer == NULL) {
 		throw "File buffer is empty!";
+	}
 
-	if (size % 4 != 0)
-	{
+	if (size % 4 != 0) {
 		std::cout << "Incorrect table size.";
 		return;
 	}
 
 	std::cout << "Offeset (h) | ";
-	for (int i = 0; i < size; ++i)
+	for (int i = 0; i < size; ++i) {
 		std::cout << std::setfill('0') << std::setw(sizeof(uint8_t) * 2) << std::hex << i << " ";
+	}
 	std::cout << "| Decoded Text\n" << std::string(14 + (int)size * 3 + 2 + 16, '-') << '\n';
 
 	int linesCount = fileSize % size == 0 ? fileSize / size : fileSize / size + 1;
-	for (int i = 0; i < linesCount; ++i)
-	{
+	for (int i = 0; i < linesCount; ++i) {
 		std::cout << " 0x" << std::setfill('0') << std::setw(sizeof(int) * 2) << std::hex << i * size << " | ";
-		for (uint8_t j = 0; j < size; ++j)
-		{
-			if (i * size + j >= this->fileSize)
-			{
+		for (uint8_t j = 0; j < size; ++j) {
+			if (i * size + j >= this->fileSize) {
 				std::cout << std::string((size - j) * 3, ' ');
 				break;
 			}
 			std::cout << std::setfill('0') << std::setw(sizeof(uint8_t) * 2) << std::hex << (int)this->buffer[i * size + j] << " ";
 		}
 		std::cout << "| ";
-		for (uint8_t j = 0; j < size; ++j)
-		{
-			if (i * size + j >= this->fileSize)
+		for (uint8_t j = 0; j < size; ++j) {
+			if (i * size + j >= this->fileSize) {
 				break;
+			}
 			std::cout << (this->buffer[i * size + j] >= 0 && this->buffer[i * size + j] <= 31 ? '.' : this->buffer[i * size + j]);
 		}
 		std::cout << std::endl;

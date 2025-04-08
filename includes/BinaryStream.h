@@ -20,61 +20,43 @@ private:
 
 	bool isFileOpen;
 
+	bool check_jump(int) const;
+
 public:
-	BinaryStream()
-	{
-		buffer = NULL;
+	static BinaryStream* init();
+	static BinaryStream* init(const std::string);
 
-		fileSize = 0;
-		pos = 0;
+	BinaryStream();
+	BinaryStream(const std::string);
+	~BinaryStream() { clear(); }
 
-		isFileOpen = false;
-	}
+	unsigned int read_short_short();
+	unsigned short read_short();
+	unsigned long read_long();
+	unsigned long long read_long_long();
+	float read_float();
+	std::string read_str_wz(int);
+	std::string read_str(int);
 
-	BinaryStream(std::string fileName)
-	{
-		isFileOpen = OpenFile(fileName);
+	bool jump(int);
 
-		if (!isFileOpen)
-			throw "Failed to Open File\n";
-	}
+	// Functions which convert values into bytes for writting into the file.
+	static char convert_symbol(int);
+	static std::string convert_string(int, const std::string);
+	static std::string convert_float(float);
+	static std::string convert_double(double);
+	static std::string convert_long(int);
+	static std::string convert_long_long(int);
 
-	~BinaryStream()
-	{
-		Clear();
-	}
+	bool open_file(const std::string);
+	void clear();
+	std::string get_filename_path(const std::string) const;
+	std::string get_filename(const std::string) const;
 
-	unsigned int ReadShortShort();
-	unsigned short ReadShort();
-	unsigned long ReadLong();
-	float ReadFloat();
-	std::string ReadStringWithoutZeroes(int size);
-	std::string ReadString(int size);
-	bool Jump(int jump);
+	char* get_buffer() const { return buffer; }
 
-	std::string WriteString(int size, std::string str);
-	char WriteShort(int num);
-	std::string WriteFloat(float num);
-	std::string WriteLong(int num);
-
-	bool OpenFile(std::string filename);
-	void Clear();
-	std::string GetFileNamePath(const std::string str);
-	std::string GetFilenameFile(const std::string str);
-
-	char* GetBuffer() { return buffer; }
-	int* GetIntBuffer()
-	{
-		int* intBuffer = new int[fileSize];
-
-		for (int i = 0; i < fileSize; ++i)
-			intBuffer[i] = buffer[i] - '0';
-
-		return intBuffer;
-	}
-
-	void PrintFile(uint8_t size = 16);
-	size_t GetPosition() { return pos; }
+	void print_file(uint8_t size = 16) const;
+	size_t get_position() const { return pos; }
 };
 
 #endif
