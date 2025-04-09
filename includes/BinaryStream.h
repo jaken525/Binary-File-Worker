@@ -34,8 +34,8 @@ public:
 	unsigned long long read_long_long();
 	float read_float();
 	double read_double();
-	std::string read_str_wz(int);
-	std::string read_str(int);
+	std::string read_str_wz(const int);
+	std::string read_str(const int);
 	template <typename T> T read_data(const int size = 0) {
 		int data_size = sizeof(T);
 		if (size == 0 && data_size == 0) {
@@ -48,12 +48,12 @@ public:
 	bool jump(int);
 
 	// Functions which convert values into bytes for writting into the file.
-	static char convert_symbol(int);
-	static std::string convert_string(int, const std::string);
-	static std::string convert_float(float);
-	static std::string convert_double(double);
-	static std::string convert_long(int);
-	static std::string convert_long_long(int);
+	static char convert_symbol(const int);
+	static std::string convert_string(const int, const std::string);
+	static std::string convert_float(const float);
+	static std::string convert_double(const double);
+	static std::string convert_long(const int);
+	static std::string convert_long_long(const int);
 
 	bool open_file(const std::string);
 	void clear();
@@ -62,7 +62,7 @@ public:
 
 	char* get_buffer() const { return buffer; }
 
-	void print_file(uint8_t size = 16) const;
+	void print_file(const uint8_t size = 16) const;
 	size_t get_position() const { return pos; }
 };
 

@@ -66,7 +66,7 @@ bool BinaryStream::open_file(const std::string filename)
 
 #pragma region DataGet
 
-std::string BinaryStream::convert_long(int num) {
+std::string BinaryStream::convert_long(const int num) {
 	std::string result(4, 0);
 	for (int i = 0; i < 4; ++i) {
 		result[i] = static_cast<char>((num >> (i * 8)) & 0xFF);
@@ -74,7 +74,7 @@ std::string BinaryStream::convert_long(int num) {
 	return result;
 }
 
-std::string BinaryStream::convert_long_long(int num) {
+std::string BinaryStream::convert_long_long(const int num) {
 	std::string result(8, 0);
 	for (int i = 0; i < 8; ++i) {
 		result[i] = static_cast<char>((num >> (i * 8)) & 0xFF);
@@ -82,7 +82,7 @@ std::string BinaryStream::convert_long_long(int num) {
 	return result;
 }
 
-std::string BinaryStream::convert_float(float num) {
+std::string BinaryStream::convert_float(const float num) {
 	std::string result(4, 0);
 	union {
 		float f;
@@ -95,7 +95,7 @@ std::string BinaryStream::convert_float(float num) {
 	return result;
 }
 
-std::string BinaryStream::convert_double(double num) {
+std::string BinaryStream::convert_double(const double num) {
 	std::string result(8, 0);
 	union {
 		double f;
@@ -108,11 +108,11 @@ std::string BinaryStream::convert_double(double num) {
 	return result;
 }
 
-char BinaryStream::convert_symbol(int num) {
+char BinaryStream::convert_symbol(const int num) {
 	return static_cast<char>(num & 0xFF);
 }
 
-std::string BinaryStream::convert_string(int size, const std::string str) {
+std::string BinaryStream::convert_string(const int size, const std::string str) {
 	std::string result(str);
 	result.resize(size, '\0');
 	return result;
@@ -120,21 +120,21 @@ std::string BinaryStream::convert_string(int size, const std::string str) {
 
 #pragma endregion
 
-bool BinaryStream::check_jump(int jump) const {
+bool BinaryStream::check_jump(const int jump) const {
 	if (pos + jump > fileSize) {
 		throw "Position out of file buffer.\n";
 	}
 	return true;
 }
 
-bool BinaryStream::jump(int jump) {
+bool BinaryStream::jump(const int jump) {
 	check_jump(jump);
 	pos += jump;
 	return true;
 }
 
 #pragma region FileRead
-std::string BinaryStream::read_str(int size) {
+std::string BinaryStream::read_str(const int size) {
 	check_jump(size);
 	std::string result = "";
 	for (int i = 0; i < size; i++) {
@@ -144,7 +144,7 @@ std::string BinaryStream::read_str(int size) {
 	return result;
 }
 
-std::string BinaryStream::read_str_wz(int size) {
+std::string BinaryStream::read_str_wz(const int size) {
 	check_jump(size);
 	std::string result = "";
 	for (int i = 0; i < size; i++) {
@@ -188,9 +188,8 @@ unsigned short BinaryStream::read_short() {
 #pragma endregion
 
 std::string BinaryStream::get_filename(const std::string str) const {
-	size_t found;
+	size_t found = str.find_last_of("/\\");
 	std::string strt;
-	found = str.find_last_of("/\\");
 	if (found < str.size()) {
 		strt = str.substr(found + 1, -1);
 		found = strt.find(".");
@@ -209,8 +208,7 @@ std::string BinaryStream::get_filename(const std::string str) const {
 }
 
 std::string BinaryStream::get_filename_path(const std::string str) const {
-	size_t found;
-	found = str.find_last_of("/\\");
+	size_t found = str.find_last_of("/\\");
 	return found != std::string::npos ? (str.substr(0, found) + "\\") : "";
 }
 
@@ -218,7 +216,7 @@ std::string BinaryStream::get_filename_path(const std::string str) const {
 /// Only for console.
 /// Print HEX table
 /// </summary>
-void BinaryStream::print_file(uint8_t size) const {
+void BinaryStream::print_file(const uint8_t size) const {
 	if (buffer == NULL) {
 		throw "File buffer is empty!";
 	}
@@ -232,7 +230,7 @@ void BinaryStream::print_file(uint8_t size) const {
 	for (int i = 0; i < size; ++i) {
 		std::cout << std::setfill('0') << std::setw(sizeof(uint8_t) * 2) << std::hex << i << " ";
 	}
-	std::cout << "| Decoded Text\n" << std::string(14 + (int)size * 3 + 2 + 16, '-') << '\n';
+	std::cout << "| Decoded Text\n" << std::string((int)size * 3 + 32, '-') << '\n';
 
 	int linesCount = fileSize % size == 0 ? fileSize / size : fileSize / size + 1;
 	for (int i = 0; i < linesCount; ++i) {
