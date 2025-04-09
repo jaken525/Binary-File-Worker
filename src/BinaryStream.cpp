@@ -2,24 +2,6 @@
 
 #pragma region Constructors
 
-BinaryStream* BinaryStream::init() {
-	BinaryStream bstream;
-	bstream.buffer = NULL;
-	bstream.fileSize = 0;
-	bstream.pos = 0;
-	bstream.isFileOpen = false;
-	return &bstream;
-}
-
-BinaryStream* BinaryStream::init(const std::string fileName) {
-	BinaryStream bstream;
-	bstream.isFileOpen = bstream.open_file(fileName);
-	if (!bstream.isFileOpen) {
-		throw "Failed to Open File\n";
-	}
-	return &bstream;
-}
-
 BinaryStream::BinaryStream() {
 	buffer = NULL;
 	fileSize = 0;
@@ -45,14 +27,15 @@ void BinaryStream::clear()
 
 bool BinaryStream::open_file(const std::string filename)
 {
+	// If you have an error, just remove (LPCWSTR)
 	HANDLE hFile = CreateFile(
 		(LPCWSTR)filename.c_str(),		// file to open
-		GENERIC_READ,			// open for reading
-		FILE_SHARE_READ,		// share for reading
-		NULL,					// default security
-		OPEN_EXISTING,			// existing file only
-		FILE_ATTRIBUTE_NORMAL,	// normal file
-		NULL					// no attr. template
+		GENERIC_READ,					// open for reading
+		FILE_SHARE_READ,				// share for reading
+		NULL,							// default security
+		OPEN_EXISTING,					// existing file only
+		FILE_ATTRIBUTE_NORMAL,			// normal file
+		NULL							// no attr. template
 	);
 	clear();
 	if (hFile == INVALID_HANDLE_VALUE)
@@ -138,7 +121,7 @@ std::string BinaryStream::convert_string(int size, const std::string str) {
 #pragma endregion
 
 bool BinaryStream::check_jump(int jump) const {
-	if (&pos + jump > &fileSize) {
+	if (pos + jump > fileSize) {
 		throw "Position out of file buffer.\n";
 	}
 	return true;
@@ -155,7 +138,7 @@ std::string BinaryStream::read_str(int size) {
 	check_jump(size);
 	std::string result = "";
 	for (int i = 0; i < size; i++) {
-		result += this->buffer[pos];
+		result += this->buffer[pos + i];
 	}
 	jump(size);
 	return result;
@@ -167,37 +150,40 @@ std::string BinaryStream::read_str_wz(int size) {
 	for (int i = 0; i < size; i++) {
 		if (this->buffer[pos] == 0)
 			break;
-		result += this->buffer[pos];
+		result += this->buffer[pos + i];
 	}
 	jump(size);
 	return result;
 }
 
 float BinaryStream::read_float() {
-	float result = 0.0;
-	unsigned long b = read_long();
-	memcpy(&result, &b, 4);
-	return result;
+	jump(4);
+	return *(float*)&this->buffer[pos - 4];
+}
+
+double BinaryStream::read_double() {
+	jump(8);
+	return *(double*)&this->buffer[pos - 8];
 }
 
 unsigned long long BinaryStream::read_long_long() {
 	jump(8);
-	return *(unsigned long long*)&this->buffer[pos];
+	return *(unsigned long long*)&this->buffer[pos - 8];
 }
 
 unsigned long BinaryStream::read_long() {
 	jump(4);
-	return *(unsigned long*)&this->buffer[pos];
+	return *(unsigned long*)&this->buffer[pos - 4];
 }
 
-unsigned int BinaryStream::read_short_short() {
+int BinaryStream::read_short_short() {
 	jump(1);
-	return *(unsigned int*)&this->buffer[pos];
+	return *(uint8_t*)&this->buffer[pos - 1];
 }
 
 unsigned short BinaryStream::read_short() {
 	jump(2);
-	return *(unsigned short*)&this->buffer[pos];
+	return *(unsigned short*)&this->buffer[pos - 2];
 }
 #pragma endregion
 
@@ -242,7 +228,7 @@ void BinaryStream::print_file(uint8_t size) const {
 		return;
 	}
 
-	std::cout << "Offeset (h) | ";
+	std::cout << "\nOffeset (h) | ";
 	for (int i = 0; i < size; ++i) {
 		std::cout << std::setfill('0') << std::setw(sizeof(uint8_t) * 2) << std::hex << i << " ";
 	}

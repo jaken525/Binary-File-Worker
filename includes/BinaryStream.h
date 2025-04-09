@@ -23,20 +23,27 @@ private:
 	bool check_jump(int) const;
 
 public:
-	static BinaryStream* init();
-	static BinaryStream* init(const std::string);
 
 	BinaryStream();
 	BinaryStream(const std::string);
 	~BinaryStream() { clear(); }
 
-	unsigned int read_short_short();
+	int read_short_short();
 	unsigned short read_short();
 	unsigned long read_long();
 	unsigned long long read_long_long();
 	float read_float();
+	double read_double();
 	std::string read_str_wz(int);
 	std::string read_str(int);
+	template <typename T> T read_data(const int size = 0) {
+		int data_size = sizeof(T);
+		if (size == 0 && data_size == 0) {
+			throw "Can't read this data. Please type data's size.";
+		}
+		jump(data_size);
+		return *(T*)&this->buffer[pos - data_size];
+	}
 
 	bool jump(int);
 
