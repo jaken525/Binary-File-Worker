@@ -2,15 +2,31 @@
 
 #pragma region Constructors
 
-BinaryStream::BinaryStream() {
-	buffer = NULL;
-	fileSize = 0;
-	pos = 0;
-	isFileOpen = false;
+BinaryStream& BinaryStream::operator=(const BinaryStream& rhs)
+{
+	if (this == &rhs) return *this;
+	fileSize = rhs.fileSize;
+	pos = rhs.pos;
+	isFileOpen = rhs.isFileOpen;
+	delete[] buffer;
+	buffer = new char[fileSize];
+	std::copy(buffer, buffer + fileSize, rhs.buffer);
+	return *this;
+}
+
+BinaryStream& BinaryStream::operator=(BinaryStream&& rhs)
+{
+	if (this == &rhs) return *this;
+	fileSize = rhs.fileSize;
+	pos = rhs.pos;
+	isFileOpen = rhs.isFileOpen;
+	std::swap(buffer, rhs.buffer);
+	return *this;
 }
 
 BinaryStream::BinaryStream(const std::string& fileName) {
 	isFileOpen = open_file(fileName);
+	pos = 0;
 	if (!isFileOpen) {
 		throw "Failed to Open File\n";
 	}
@@ -37,21 +53,18 @@ bool BinaryStream::open_file(const std::string& filename)
 		nullptr					// no attr. template
 	);
 	clear();
-	if (hFile == INVALID_HANDLE_VALUE)
-	{
+	if (hFile == INVALID_HANDLE_VALUE) {
 		std::cout << "Failed to Open File\n";
 		return false;
 	}
 	fileSize = GetFileSize(hFile, nullptr);
-	if (fileSize == 0)
-	{
+	if (fileSize == 0) {
 		std::cout << "Failed to read file. File is Empty?\n";
 		return false;
 	}
 	buffer = new char[fileSize];
 	unsigned long dwBytesRead = 0;
-	if (ReadFile(hFile, buffer, fileSize, &dwBytesRead, nullptr) == FALSE || dwBytesRead != fileSize)
-	{
+	if (ReadFile(hFile, buffer, fileSize, &dwBytesRead, nullptr) == FALSE || dwBytesRead != fileSize) {
 		std::cout << "Failed to copy file into memory\n";
 		fileSize = 0;
 		delete[] buffer;
@@ -119,15 +132,17 @@ std::string BinaryStream::convert_string(const int& size, const std::string& str
 
 #pragma endregion
 
-bool BinaryStream::check_jump(const int& jump) const {
+bool BinaryStream::check_jump(const int jump) const {
 	if (pos + jump > fileSize) {
-		throw "Position out of file buffer.\n";
+		return false;
 	}
 	return true;
 }
 
-bool BinaryStream::jump(const int& jump) {
-	check_jump(jump);
+bool BinaryStream::jump(const int jump) {
+	if (!check_jump(jump)) {
+		return false;
+	}
 	pos += jump;
 	return true;
 }
@@ -158,7 +173,7 @@ double BinaryStream::read_double() {
 
 unsigned long long BinaryStream::read_long_long() {
 	jump(8);
-	return *(unsigned long long*)&buffer[pos - 8];
+	return *(unsigned long long*) & buffer[pos - 8];
 }
 
 unsigned long BinaryStream::read_long() {
@@ -209,38 +224,48 @@ std::string BinaryStream::get_filename_path(const std::string& str) const {
 /// Print HEX table
 /// </summary>
 void BinaryStream::print_file(const uint8_t& size) const {
-	if (buffer == nullptr) {
-		throw "File buffer is empty!";
-	}
+	print_file(this->buffer, 0, this->fileSize, size);
+}
 
+void BinaryStream::print_file(const int& start, const size_t& fileSize, const uint8_t& size) const {
+	std::printf("Printing file from %d position to %d", start, fileSize);
+	print_file(this->buffer, start, fileSize, size);
+}
+
+void BinaryStream::print_file(const char* buffer, const int& start, const size_t& fileSize, const uint8_t& size) {
+	if (buffer == nullptr || fileSize == 0 || start > fileSize) {
+		throw "File buffer is empty or size of equals zero!";
+	}
 	if (size % 4 != 0) {
 		std::cout << "Incorrect table size.";
 		return;
 	}
-
 	std::cout << "\nOffeset (h) | ";
 	for (int i = 0; i < size; ++i) {
 		std::cout << std::setfill('0') << std::setw(sizeof(uint8_t) * 2) << std::hex << i << " ";
 	}
 	std::cout << "| Decoded Text\n" << std::string(14 + (int)size * 3 + 2 + 16, '-') << '\n';
-
-	int linesCount = fileSize % size == 0 ? fileSize / size : fileSize / size + 1;
+	int linesCount = (fileSize - start) % size == 0 ? (fileSize - start) / size : (fileSize - start) / size + 1;
 	for (int i = 0; i < linesCount; ++i) {
 		std::cout << " 0x" << std::setfill('0') << std::setw(sizeof(int) * 2) << std::hex << i * size << " | ";
 		for (uint8_t j = 0; j < size; ++j) {
-			if (i * size + j >= fileSize) {
+			if (i * size + j >= (fileSize - start)) {
 				std::cout << std::string((size - j) * 3, ' ');
 				break;
 			}
-			std::cout << std::setfill('0') << std::setw(sizeof(uint8_t) * 2) << std::hex << (int)buffer[i * size + j] << " ";
+			std::cout << std::setfill('0') << std::setw(sizeof(uint8_t) * 2) << std::hex << (int)(uint8_t)buffer[start + i * size + j] << " ";
 		}
 		std::cout << "| ";
 		for (uint8_t j = 0; j < size; ++j) {
-			if (i * size + j >= fileSize) {
+			if (i * size + j >= (fileSize - start)) {
 				break;
 			}
-			std::cout << (buffer[i * size + j] >= 0 && buffer[i * size + j] <= 31 ? '.' : buffer[i * size + j]);
+			std::cout << (buffer[start + i * size + j] >= 0 && buffer[start + i * size + j] <= 31 ? '.' : buffer[start + i * size + j]);
 		}
 		std::cout << std::endl;
 	}
+}
+
+void BinaryStream::print_file(const BinaryStream& bstream, const uint8_t& size) {
+	print_file(bstream.get_buffer(), 0, bstream.get_file_size(), size);
 }
