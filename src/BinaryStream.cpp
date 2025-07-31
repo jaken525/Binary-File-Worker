@@ -44,7 +44,7 @@ void BinaryStream::clear()
 bool BinaryStream::open_file(const std::string& filename)
 {
 	HANDLE hFile = CreateFile(
-		(LPCWSTR)filename.c_str(),		// file to open
+		filename.c_str(),		// file to open
 		GENERIC_READ,			// open for reading
 		FILE_SHARE_READ,		// share for reading
 		nullptr,					// default security
@@ -78,17 +78,25 @@ bool BinaryStream::open_file(const std::string& filename)
 
 #pragma region DataGet
 
-std::string BinaryStream::convert_long(const int& num) {
-	std::string result(4, 0);
-	for (int i = 0; i < 4; ++i) {
+std::string BinaryStream::convert_int16(const short& num) {
+	std::string result(2, 0);
+	for (int i = 0; i != 2; ++i) {
 		result[i] = static_cast<char>((num >> (i * 8)) & 0xFF);
 	}
 	return result;
 }
 
-std::string BinaryStream::convert_long_long(const int& num) {
+std::string BinaryStream::convert_int32(const int& num) {
+	std::string result(4, 0);
+	for (int i = 0; i != 4; ++i) {
+		result[i] = static_cast<char>((num >> (i * 8)) & 0xFF);
+	}
+	return result;
+}
+
+std::string BinaryStream::convert_int64(const long& num) {
 	std::string result(8, 0);
-	for (int i = 0; i < 8; ++i) {
+	for (int i = 0; i != 8; ++i) {
 		result[i] = static_cast<char>((num >> (i * 8)) & 0xFF);
 	}
 	return result;
@@ -101,7 +109,7 @@ std::string BinaryStream::convert_float(const float& num) {
 		uint32_t u;
 	} converter;
 	converter.f = num;
-	for (int i = 0; i < 4; ++i) {
+	for (int i = 0; i != 4; ++i) {
 		result[i] = static_cast<char>((converter.u >> (i * 8)) & 0xFF);
 	}
 	return result;
@@ -114,13 +122,13 @@ std::string BinaryStream::convert_double(const double& num) {
 		uint64_t u;
 	} converter;
 	converter.f = num;
-	for (int i = 0; i < 8; ++i) {
+	for (int i = 0; i != 8; ++i) {
 		result[i] = static_cast<char>((converter.u >> (i * 8)) & 0xFF);
 	}
 	return result;
 }
 
-char BinaryStream::convert_symbol(const int& num) {
+char BinaryStream::convert_char(const int& num) {
 	return static_cast<char>(num & 0xFF);
 }
 
@@ -132,63 +140,112 @@ std::string BinaryStream::convert_string(const int& size, const std::string& str
 
 #pragma endregion
 
-bool BinaryStream::check_jump(const int jump) const {
-	if (pos + jump > fileSize) {
+bool BinaryStream::jump(const int& jump) {
+	if (jump > fileSize || jump < 0) {
 		return false;
 	}
+	pos = jump;
 	return true;
 }
 
-bool BinaryStream::jump(const int jump) {
-	if (!check_jump(jump)) {
-		return false;
-	}
-	pos += jump;
-	return true;
+bool BinaryStream::forward(const int& num) {
+	return jump(pos + num);
+}
+
+bool BinaryStream::back(const int& num) {
+	return jump(pos - num);
 }
 
 #pragma region FileRead
-std::string BinaryStream::read_str(const int& size) {
-	jump(size);
+std::string BinaryStream::read_str(const int& size, const bool& withTrans) {
+	if (withTrans) {
+		forward(size);
+	}
 	const char* start = &buffer[pos - size];
 	return std::string(start, start + size);;
 }
 
-std::string BinaryStream::read_str_wz(const int& size) {
-	jump(size);
+std::string BinaryStream::read_str_wz(const int& size, const bool& withTrans) {
+	if (withTrans) {
+		forward(size);
+	}
 	const char* start = &buffer[pos - size];
 	const char* end = std::find(start, start + size, '\0');
 	return std::string(start, end);
 }
 
-float BinaryStream::read_float() {
-	jump(4);
+float BinaryStream::read_float(const bool& withTrans) {
+	if (withTrans) {
+		forward(4);
+	}
 	return *(float*)&buffer[pos - 4];
 }
 
-double BinaryStream::read_double() {
-	jump(8);
+double BinaryStream::read_double(const bool& withTrans) {
+	if (withTrans) {
+		forward(8);
+	}
 	return *(double*)&buffer[pos - 8];
 }
 
-unsigned long long BinaryStream::read_long_long() {
-	jump(8);
-	return *(unsigned long long*) & buffer[pos - 8];
-}
-
-unsigned long BinaryStream::read_long() {
-	jump(4);
-	return *(unsigned long*)&buffer[pos - 4];
-}
-
-char BinaryStream::read_short_short() {
-	jump(1);
+char BinaryStream::read_char(const bool& withTrans) {
+	if (withTrans) {
+		forward(1);
+	}
 	return *(char*)&buffer[pos - 1];
 }
 
-unsigned short BinaryStream::read_short() {
-	jump(2);
-	return *(unsigned short*)&buffer[pos - 2];
+int8_t BinaryStream::read_int8(const bool& withTrans) {
+	return read_char(withTrans);
+}
+
+uint64_t BinaryStream::read_uint64(const bool& withTrans) {
+	if (withTrans) {
+		forward(8);
+	}
+	return *(uint64_t*)&buffer[pos - 8];
+}
+
+uint32_t BinaryStream::read_uint32(const bool& withTrans) {
+	if (withTrans) {
+		forward(4);
+	}
+	return *(uint32_t*)&buffer[pos - 4];
+}
+
+uint16_t BinaryStream::read_uint16(const bool& withTrans) {
+	if (withTrans) {
+		forward(2);
+	}
+	return *(uint16_t*)&buffer[pos - 2];
+}
+
+int64_t BinaryStream::read_int64(const bool& withTrans) {
+	if (withTrans) {
+		forward(8);
+	}
+	return *(int64_t*)&buffer[pos - 8];
+}
+
+int32_t BinaryStream::read_int32(const bool& withTrans) {
+	if (withTrans) {
+		forward(4);
+	}
+	return *(int32_t*)&buffer[pos - 4];
+}
+
+int16_t BinaryStream::read_int16(const bool& withTrans) {
+	if (withTrans) {
+		forward(2);
+	}
+	return *(int16_t*)&buffer[pos - 2];
+}
+
+uint8_t BinaryStream::read_uint8(const bool& withTrans) {
+	if (withTrans) {
+		forward(1);
+	}
+	return *(uint8_t*)&buffer[pos - 1];
 }
 #pragma endregion
 
@@ -234,7 +291,7 @@ void BinaryStream::print_file(const int& start, const size_t& fileSize, const ui
 
 void BinaryStream::print_file(const char* buffer, const int& start, const size_t& fileSize, const uint8_t& size) {
 	if (buffer == nullptr || fileSize == 0 || start > fileSize) {
-		throw "File buffer is empty or size of equals zero!";
+		throw "File buffer is empty or size equals zero!";
 	}
 	if (size % 4 != 0) {
 		std::cout << "Incorrect table size.";
@@ -246,9 +303,9 @@ void BinaryStream::print_file(const char* buffer, const int& start, const size_t
 	}
 	std::cout << "| Decoded Text\n" << std::string(14 + (int)size * 3 + 2 + 16, '-') << '\n';
 	int linesCount = (fileSize - start) % size == 0 ? (fileSize - start) / size : (fileSize - start) / size + 1;
-	for (int i = 0; i < linesCount; ++i) {
+	for (int i = 0; i != linesCount; ++i) {
 		std::cout << " 0x" << std::setfill('0') << std::setw(sizeof(int) * 2) << std::hex << i * size << " | ";
-		for (uint8_t j = 0; j < size; ++j) {
+		for (uint8_t j = 0; j != size; ++j) {
 			if (i * size + j >= (fileSize - start)) {
 				std::cout << std::string((size - j) * 3, ' ');
 				break;
@@ -256,7 +313,7 @@ void BinaryStream::print_file(const char* buffer, const int& start, const size_t
 			std::cout << std::setfill('0') << std::setw(sizeof(uint8_t) * 2) << std::hex << (int)(uint8_t)buffer[start + i * size + j] << " ";
 		}
 		std::cout << "| ";
-		for (uint8_t j = 0; j < size; ++j) {
+		for (uint8_t j = 0; j != size; ++j) {
 			if (i * size + j >= (fileSize - start)) {
 				break;
 			}
