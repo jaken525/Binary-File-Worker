@@ -57,10 +57,12 @@ public:
 
 	bool open_file(const std::string&);
 	void clear();
-	std::string get_filename_path(const std::string&) const;
-	std::string get_filename(const std::string&) const;
+	static std::string get_filename_path(const std::string&);
+	static std::string get_filename(const std::string&);
 
-	char* get_buffer() const { return buffer; }
+	char* get_bufferr() const { return buffer; }
+	const char* get_buffer() const { return buffer; }
+	uint8_t* get_buffer_uint8() const { return reinterpret_cast<uint8_t*>(buffer); }
 	size_t get_file_size() const { return fileSize; }
 	size_t get_position() const { return pos; }
 	bool is_open() const { return isFileOpen; }
@@ -73,6 +75,9 @@ public:
 	void print_file(const int&, const size_t&, const uint8_t& size = 16) const;
 	static void print_file(const char*, const int&, const size_t&, const uint8_t& size = 16);
 	static void print_file(const BinaryStream&, const uint8_t& size = 16);
+
+	void write_file(const std::string&);
+	static void write_file(const std::string&, char*, size_t&);
 
 private:
 	size_t fileSize;

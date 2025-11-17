@@ -249,7 +249,7 @@ uint8_t BinaryStream::read_uint8(const bool& withTrans) {
 }
 #pragma endregion
 
-std::string BinaryStream::get_filename(const std::string& str) const {
+std::string BinaryStream::get_filename(const std::string& str) {
 	size_t found;
 	std::string strt;
 	found = str.find_last_of("/\\");
@@ -270,7 +270,7 @@ std::string BinaryStream::get_filename(const std::string& str) const {
 	return strt.substr(0, lastdot);
 }
 
-std::string BinaryStream::get_filename_path(const std::string& str) const {
+std::string BinaryStream::get_filename_path(const std::string& str) {
 	size_t found;
 	found = str.find_last_of("/\\");
 	return found != std::string::npos ? (str.substr(0, found) + "\\") : "";
@@ -325,4 +325,15 @@ void BinaryStream::print_file(const char* buffer, const int& start, const size_t
 
 void BinaryStream::print_file(const BinaryStream& bstream, const uint8_t& size) {
 	print_file(bstream.get_buffer(), 0, bstream.get_file_size(), size);
+}
+
+void BinaryStream::write_file(const std::string& fileName) {
+	write_file(fileName, buffer, fileSize);
+}
+
+#include <fstream>
+void BinaryStream::write_file(const std::string& fileName, char* data, size_t& size) {
+	std::ofstream file(fileName, std::ios::binary);
+	file.write(data, size);
+	file.close();
 }
