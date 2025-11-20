@@ -9,10 +9,23 @@
 class BinaryStream final {
 public:
 	BinaryStream() : buffer(nullptr), fileSize(0), pos(0), isFileOpen(false) {};
+	BinaryStream(char* buffer, size_t fileSize, size_t pos = 0) :
+		buffer(buffer),
+		fileSize(fileSize),
+		pos(pos),
+		isFileOpen(true) {};
 	// Constructor with path
 	BinaryStream(const std::string&);
-	BinaryStream(const BinaryStream& rhs) : fileSize(rhs.fileSize), buffer(new char{ *rhs.buffer }), pos(0), isFileOpen(false) {};
-	BinaryStream(BinaryStream&& rhs) : fileSize(rhs.fileSize), buffer(rhs.buffer), pos(0), isFileOpen(false) {
+	BinaryStream(const BinaryStream& rhs) :
+		fileSize(rhs.fileSize),
+		buffer(new char{ *rhs.buffer }),
+		pos(0),
+		isFileOpen(true) {};
+	BinaryStream(BinaryStream&& rhs) :
+		fileSize(rhs.fileSize),
+		buffer(rhs.buffer),
+		pos(0),
+		isFileOpen(true) {
 		rhs.buffer = nullptr;
 	};
 	~BinaryStream() { delete[] buffer; }
@@ -59,6 +72,7 @@ public:
 	void clear();
 	static std::string get_filename_path(const std::string&);
 	static std::string get_filename(const std::string&);
+	static std::string get_filext(const std::string&);
 
 	char* get_bufferr() const { return buffer; }
 	const char* get_buffer() const { return buffer; }
@@ -77,7 +91,7 @@ public:
 	static void print_file(const BinaryStream&, const uint8_t& size = 16);
 
 	void write_file(const std::string&);
-	static void write_file(const std::string&, char*, size_t&);
+	static void write_file(const std::string&, char*, const size_t&);
 
 private:
 	size_t fileSize;

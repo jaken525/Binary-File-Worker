@@ -332,8 +332,8 @@ void BinaryStream::write_file(const std::string& fileName) {
 }
 
 #include <fstream>
-void BinaryStream::write_file(const std::string& fileName, char* data, size_t& size) {
-	std::ofstream file(fileName, std::ios::binary);
+void BinaryStream::write_file(const std::string& filePath, char* data, const size_t& size) {
+	std::ofstream file(filePath, std::ios::binary);
 	file.write(data, size);
 	file.close();
 }
