@@ -1,12 +1,15 @@
-#ifndef BINARYSTREAM_H
-#define BINARYSTREAM_H
+#pragma once
 
 #include <iostream>
 #include <cstring>
 #include <iomanip>
-#include <shlwapi.h>
 
-class BinaryStream final {
+#ifdef _WIN32
+#include <shlwapi.h>
+#endif
+
+class BinaryStream final
+{
 public:
 	BinaryStream() : buffer(nullptr), fileSize(0), pos(0), isFileOpen(false) {};
 	BinaryStream(char* buffer, size_t fileSize, size_t pos = 0) :
@@ -29,8 +32,6 @@ public:
 		rhs.buffer = nullptr;
 	};
 	~BinaryStream() { delete[] buffer; }
-	static BinaryStream* create_instance() { return new BinaryStream(); }
-	static BinaryStream* create_instance(const std::string& file_name) { return new BinaryStream(file_name); }
 
 	BinaryStream& operator=(const BinaryStream& rhs);
 	BinaryStream& operator=(BinaryStream&& rhs);
@@ -39,59 +40,60 @@ public:
 	const char* operator->() const { return buffer; };
 	char& operator[](const int& x) const { return buffer[x]; }
 
-	char read_char(const bool& withTrans = true);
-	int8_t read_int8(const bool& withTrans = true);
-	int16_t read_int16(const bool& withTrans = true);
-	int32_t read_int32(const bool& withTrans = true);
-	int64_t read_int64(const bool& withTrans = true);
-	uint8_t read_uint8(const bool& withTrans = true);
-	uint16_t read_uint16(const bool& withTrans = true);
-	uint32_t read_uint32(const bool& withTrans = true);
-	uint64_t read_uint64(const bool& withTrans = true);
-	float read_float(const bool& withTrans = true);
-	double read_double(const bool& withTrans = true);
-	std::string read_str_wz(const int&, const bool& withTrans = true);
-	std::string read_str(const int&, const bool& withTrans = true);
-	template <typename T> T read_data(const int& size = 0, const bool& withTrans = true);
+	char ReadChar(const bool& withTrans = true);
+	int8_t ReadInt8(const bool& withTrans = true);
+	int16_t ReadInt16(const bool& withTrans = true);
+	int32_t ReadInt32(const bool& withTrans = true);
+	int64_t ReadInt64(const bool& withTrans = true);
+	uint8_t ReadUInt8(const bool& withTrans = true);
+	uint16_t ReadUInt16(const bool& withTrans = true);
+	uint32_t ReadUInt32(const bool& withTrans = true);
+	uint64_t ReadUInt64(const bool& withTrans = true);
+	float ReadFloat(const bool& withTrans = true);
+	double ReadDouble(const bool& withTrans = true);
+	std::string ReadStringRaw(const int&, const bool& withTrans = true);
+	std::string ReadString(const int&, const bool& withTrans = true);
+	template <typename T> T ReadData(const int& size = -1, const bool& withTrans = true);
 
-	bool jump(const int&);
-	bool forward(const int&);
-	bool back(const int&);
+	bool Jump(const int&);
+	bool Forward(const int&);
+	bool Back(const int&);
 
 	// Functions which convert values into bytes for writting into the file.
 
-	static char convert_char(const int&);
-	static std::string convert_string(const int&, const std::string&);
-	static std::string convert_float(const float&);
-	static std::string convert_double(const double&);
-	static std::string convert_int16(const short&);
-	static std::string convert_int32(const int&);
-	static std::string convert_int64(const long&);
+	static char ConvertChar(const int&);
+	static std::string ConvertString(const int&, const std::string&);
+	static std::string ConvertFloat(const float&);
+	static std::string ConvertDouble(const double&);
+	static char ConvertInt8(const uint8_t&);
+	static std::string ConvertInt16(const short&);
+	static std::string ConvertInt32(const int&);
+	static std::string ConvertInt64(const long&);
 
-	bool open_file(const std::string&);
-	void clear();
-	static std::string get_filename_path(const std::string&);
-	static std::string get_filename(const std::string&);
-	static std::string get_filext(const std::string&);
+	bool OpenFile(const std::string&);
+	void Clear();
+	static std::string GetFileNameWithExt(const std::string&);
+	static std::string GetFileName(const std::string&);
+	static std::string GetFileExtention(const std::string&);
+	static std::string GetFilePath(const std::string&);
 
-	char* get_bufferr() const { return buffer; }
-	const char* get_buffer() const { return buffer; }
-	uint8_t* get_buffer_uint8() const { return reinterpret_cast<uint8_t*>(buffer); }
-	size_t get_file_size() const { return fileSize; }
-	size_t get_position() const { return pos; }
-	bool is_open() const { return isFileOpen; }
-	static char* get_buffer(const BinaryStream* bstream) { return bstream->buffer; }
-	static size_t get_file_size(const BinaryStream* bstream) { return bstream->fileSize; }
-	static size_t get_position(const BinaryStream* bstream) { return bstream->pos; }
-	static bool is_open(const BinaryStream* bstream) { return bstream->isFileOpen; }
+	char* GetBuffer() const { return buffer; }
+	uint8_t* GetBufferUInt8() const { return reinterpret_cast<uint8_t*>(buffer); }
+	size_t GetSize() const { return fileSize; }
+	size_t GetPosition() const { return pos; }
+	bool IsOpen() const { return isFileOpen; }
+	static char* GetBuffer(const BinaryStream* bstream) { return bstream->buffer; }
+	static size_t GetSize(const BinaryStream* bstream) { return bstream->fileSize; }
+	static size_t GetPosition(const BinaryStream* bstream) { return bstream->pos; }
+	static bool IsOpen(const BinaryStream* bstream) { return bstream->isFileOpen; }
 
-	void print_file(const uint8_t& size = 16) const;
-	void print_file(const int&, const size_t&, const uint8_t& size = 16) const;
-	static void print_file(const char*, const int&, const size_t&, const uint8_t& size = 16);
-	static void print_file(const BinaryStream&, const uint8_t& size = 16);
+	void PrintFile(const uint8_t& size = 16) const;
+	void PrintFile(const int&, const size_t&, const uint8_t& size = 16) const;
+	static void PrintFile(const char*, const int&, const size_t&, const uint8_t& size = 16);
+	static void PrintFile(const BinaryStream&, const uint8_t& size = 16);
 
-	void write_file(const std::string&);
-	static void write_file(const std::string&, char*, const size_t&);
+	void WriteFile(const std::string&);
+	static void WriteFile(const std::string&, char*, const size_t&);
 
 private:
 	size_t fileSize;
@@ -103,17 +105,18 @@ private:
 /// <summary>
 /// Use carefully
 /// </summary>
-template <typename T> T BinaryStream::read_data(const int& size, const bool& withTrans) {
-	try {
-		int data_size = size == 0 ? sizeof(T) : size;
-		if (withTrans) {
-			forward(data_size);
-		}
-		return *(T*)&buffer[pos - data_size];
+template <typename T> T BinaryStream::ReadData(const int& size, const bool& withTrans)
+{
+	try
+	{
+		int dataSize = size == -1 ? sizeof(T) : size;
+		if (withTrans)
+			Forward(dataSize);
+
+		return *reinterpret_cast<T*>(&buffer[pos - dataSize]);
 	}
-	catch (...) {
+	catch (...)
+	{
 		std::cout << "Can't read this data. Please try another type of data.\n";
 	}
 }
-
-#endif
